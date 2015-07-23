@@ -13,30 +13,48 @@ exports.crudify = function(file) {
     api.operations = [];
 
     var idAnyFound = false;
-    var operation = {
+    var operations  = [];
+
+    operations.push( {
       method: "GET",
       summary: "Fetch " + k,
       type: k,
       parameters: []
-    }
+    } );
+
+    operations.push( {
+      method: "POST",
+      summary: "Post to " + k,
+      type: k,
+      parameters: []
+    } );
+
+    operations.push( {
+      method: "DELETE",
+      summary: "Delete " + k,
+      type: k,
+      parameters: []
+    } );
+    //var operation =
 
     //console.log(k);
     var idFound = false;
-      _.forEach(model.properties, function(prop, pk) {
+    _.forEach(model.properties, function(prop, pk) {
         if(pk !== "id" && pk !== "uuid" && pk !== "uid" && pk !== "key") return;
         idFound = idAnyFound = true;
-        operation.parameters.push({
-          name: pk,
-          description: prop.description,
-          paramType: "query",
-          type: prop.type
-        });
+        _.forEach(operations, function(operation) {
+          operation.parameters.push({
+            name: pk,
+            description: prop.description,
+            paramType: "query",
+            type: prop.type
+          });
       });
-      if(idFound) api.operations.push(operation);
+      if(idFound) api.operations = operations;
 
       if(idAnyFound) apis.push(api);
   });
-
+});
 
   file_contents.apis = apis;
   fs.writeFileSync("out.json", JSON.stringify(file_contents, null, '\t'));
@@ -51,6 +69,8 @@ exports.crudify = function(file) {
   });
   */
 }
+
+
 if(!module.parent) {
   exports.crudify("account.json");
 }
