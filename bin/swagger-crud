@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+/*eslint quotes: [0, "single"], curly: 0, new-cap:1, eqeqeq:1, no-process-exit:0, no-loop-func:1, no-unreachable:1, camelcase:0, noempty:0, dot-notation:0, no-underscore-dangle:0, eol-last:0*/
+/*eslint-disable no-console */
+/*eslint-env node */
+
+var path = require('path');
+var swaggercrud = require(path.join(__dirname, '..', 'index.js'));
+var program = require('commander');
+var packageJson = require(path.join(__dirname, '..', 'package.json'));
+
+program
+  .version( packageJson.version )
+  .usage('<file>')
+  .description('Crudify Swagger file')
+  .action( function( prg  ) {
+    if(!prg || !prg.length) {
+      console.log("Missing Swagger file");
+      //program.outputHelp();
+      process.exit(1);
+    }
+    console.log("Using Swagger file: " + prg);
+    swaggercrud.crudify( prg, program.args[1] );
+    console.log("Done.");
+  } );
+
+program.parse(process.argv);

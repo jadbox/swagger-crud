@@ -2,6 +2,9 @@
   "name": "swagger-crud",
   "version": "0.1.0",
   "description": "Takes swagger models and generates swagger APIs",
+  "bin": {
+    "lambdapi": "./bin/swagger-crud"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,6 +19,7 @@
     "url": "https://github.com/jadbox/swagger-crud/issues"
   },
   "dependencies": {
+    "commander": "git://github.com/jadbox/commander.js",
     "lodash": "^3.10.0",
     "swagger-parser": "^2.5.0"
   }
