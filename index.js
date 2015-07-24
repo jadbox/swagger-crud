@@ -11,18 +11,20 @@ exports.crudify = function(file, outfile) {
 
   var apis = [];// file_contents.apis;
   var models = file_contents.models;
+
+  // FOR EACH MODEL (unique path, operations)
   _.forEach(models, function(model, k) {
     var api = {};
     api.path = "/" + k;
     api.operations = [];
 
-    var idAnyFound = false;
-    var operations  = [];
+    var operations = [];
 
     // Create
     operations.push( {
       method: "POST",
       summary: "Create " + k,
+      nickname: "create" + _.capitalize(k),
       type: k,
       parameters: []
     } );
@@ -31,6 +33,7 @@ exports.crudify = function(file, outfile) {
     operations.push( {
       method: "PATCH",
       summary: "Update to " + k,
+      nickname: "update" + _.capitalize(k),
       type: k,
       parameters: []
     } );
@@ -43,7 +46,7 @@ exports.crudify = function(file, outfile) {
         if(pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
           keyName = pk;
           keyNode = prop;
-          idFound = idAnyFound = true;
+          idFound = true;
         }
 
         _.forEach(operations, function(operation) {
@@ -61,11 +64,12 @@ exports.crudify = function(file, outfile) {
 
   });
 
-  if(!idAnyFound) return;
+  if(!idFound) return;
   // get by id, uuid, key
   operations.push( {
     method: "GET",
     summary: "Fetch " + k,
+    nickname: "get" + _.capitalize(k),
     type: k,
     parameters: [{
       name: keyName,
@@ -79,6 +83,7 @@ exports.crudify = function(file, outfile) {
   operations.push( {
     method: "DELETE",
     summary: "Delete " + k,
+    nickname: "delete" + _.capitalize(k),
     type: k,
     parameters: [{
       name: keyName,
@@ -87,8 +92,8 @@ exports.crudify = function(file, outfile) {
       type: keyNode.type
     }]
   } );
-  if(idFound) api.operations = operations;
-  if(idAnyFound) apis.push(api);
+  api.operations = operations; //merge
+  apis.push(api);
 });
 
   file_contents.apis = apis;
