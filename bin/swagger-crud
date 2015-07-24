@@ -8,22 +8,30 @@ var swaggercrud = require(path.join(__dirname, '..', 'index.js'));
 var program = require('commander');
 var packageJson = require(path.join(__dirname, '..', 'package.json'));
 
-program
-  .version( packageJson.version )
-  .usage('<input file> [outputfile]')
-  .description('Crudify Swagger file')
-  .action( function( prg, outputfile  ) {
-    if(!prg || !prg.length) {
-      console.log("Missing Swagger file");
-      //program.outputHelp();
-      process.exit(1);
-    }
-    if(!outputfile || !outputfile.length) outputfile = "out.json";
-    console.log("Using Swagger file: " + prg);
-    swaggercrud.crudify( prg, outputfile );
+var cmd_crudify = function(program) {
+  return program
+    .version( packageJson.version )
+    .command('crudify <Swagger file>', module.parent?null:' ', {isDefault: !module.parent})
+    .usage('<Swagger file> [outputfile]')
+    .description('Crudify Swagger file')
+    .action( function( prg, outputfile  ) {
+      if(!prg || !prg.length) {
+        console.log("Missing Swagger file");
+        //program.outputHelp();
+        process.exit(1);
+      }
+      if(!outputfile || !outputfile.length) outputfile = "out.json";
+      console.log("Using Swagger file: " + prg);
+      swaggercrud.crudify( prg, outputfile );
 
-    console.log("Writting: ", outputfile);
-    console.log("Done.");
-  } );
+      console.log("Writting: ", outputfile);
+      console.log("Done.");
+    } );
+}
 
-program.parse(process.argv);
+exports.commands = [cmd_crudify];
+
+if(!module.parent) {
+  cmd_crudify(program);
+  program.parse(process.argv);
+}

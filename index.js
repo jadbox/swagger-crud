@@ -19,45 +19,76 @@ exports.crudify = function(file, outfile) {
     var idAnyFound = false;
     var operations  = [];
 
-    operations.push( {
-      method: "GET",
-      summary: "Fetch " + k,
-      type: k,
-      parameters: []
-    } );
-
+    // Create
     operations.push( {
       method: "POST",
-      summary: "Post to " + k,
+      summary: "Create " + k,
       type: k,
       parameters: []
     } );
 
+    // Update field (or all fields)
     operations.push( {
-      method: "DELETE",
-      summary: "Delete " + k,
+      method: "PATCH",
+      summary: "Update to " + k,
       type: k,
       parameters: []
     } );
-    //var operation =
 
     //console.log(k);
     var idFound = false;
+    var keyName, keyNode;
+    // FOR EACH MODEL PROPERTY
     _.forEach(model.properties, function(prop, pk) {
-        if(pk !== "id" && pk !== "uuid" && pk !== "uid" && pk !== "key") return;
-        idFound = idAnyFound = true;
+        if(pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
+          keyName = pk;
+          keyNode = prop;
+          idFound = idAnyFound = true;
+        }
+
         _.forEach(operations, function(operation) {
           operation.parameters.push({
             name: pk,
             description: prop.description,
             paramType: "query",
-            type: prop.type
+            type: prop.type,
+            required: operation.method === "PATCH" ? false : true
           });
       });
-      if(idFound) api.operations = operations;
 
-      if(idAnyFound) apis.push(api);
+
+
+
   });
+
+  if(!idAnyFound) return;
+  // get by id, uuid, key
+  operations.push( {
+    method: "GET",
+    summary: "Fetch " + k,
+    type: k,
+    parameters: [{
+      name: keyName,
+      description: keyNode.description,
+      paramType: "query",
+      type: keyNode.type
+    }]
+  } );
+
+  // Delete the model
+  operations.push( {
+    method: "DELETE",
+    summary: "Delete " + k,
+    type: k,
+    parameters: [{
+      name: keyName,
+      description: keyNode.description,
+      paramType: "query",
+      type: keyNode.type
+    }]
+  } );
+  if(idFound) api.operations = operations;
+  if(idAnyFound) apis.push(api);
 });
 
   file_contents.apis = apis;
