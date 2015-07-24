@@ -3,13 +3,14 @@ var _       = require("lodash");
 var fs = require("fs");
 var path = require("path");
 
-exports.crudify = function(file, outfile) {
+exports.crudify = function(file, outfile, removeapis) {
+  console.log("removeapis", removeapis);
   file = path.join(process.cwd(), file);
   outfile = path.join(process.cwd(), outfile);
 
   var file_contents = JSON.parse(fs.readFileSync(file));
 
-  var apis = [];// file_contents.apis;
+  var apis = removeapis ? [] : file_contents.apis;
   var models = file_contents.models;
 
   // FOR EACH MODEL (unique path, operations)
