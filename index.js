@@ -12,7 +12,7 @@ exports.crudify = function(file, outfile, removeapis) {
   outfile = path.join(process.cwd(), outfile);
 
   var file_contents = JSON.parse(fs.readFileSync(file));
-  if(parseInt(file_contents.apiVersion) < 2) crudify_v1(file_contents, removeapis);
+  if(parseInt(file_contents.swaggerVersion) < 2) crudify_v1(file_contents, removeapis);
   else crudify_v2(file_contents, removeapis);
 
   fs.writeFileSync(outfile, JSON.stringify(file_contents, null, '\t'));
@@ -26,7 +26,7 @@ exports.crudify = function(file, outfile, removeapis) {
     else throw new Error(err);
   });
   */
-}
+};
 
 
 if(!module.parent) {
@@ -35,9 +35,106 @@ if(!module.parent) {
 
 function crudify_v2(file_contents, removeapis) {
   console.log("=== Swagger v2 spec NOT supported yet ===");
+  if(!file_contents.paths) file_contents.paths = {};
+  var apis = removeapis ? {} : file_contents.paths;
+  if(removeapis) delete file_contents.apis; // legecy
+  var models = file_contents.models;
+
+  // FOR EACH MODEL (unique path, operations)
+  _.forEach(models, function(model, k) {
+    var api = {};
+
+    var operations = [];
+
+    // Create
+    operations.push( {
+      method: "POST",
+      summary: "Create " + k,
+      operationId: "create" + _.capitalize(k),
+      responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
+      parameters: []
+    } );
+
+    // Update field (or all fields)
+    operations.push( {
+      method: "PATCH",
+      summary: "Update to " + k,
+      operationId: "update" + _.capitalize(k),
+      responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
+      parameters: []
+    } );
+
+    //console.log(k);
+    var idFound = false;
+    var keyName, keyNode;
+    // FOR EACH MODEL PROPERTY
+    _.forEach(model.properties, function(prop, pk) {
+        if(pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
+          keyName = pk;
+          keyNode = prop;
+          idFound = true;
+        }
+
+        _.forEach(operations, function(operation) {
+          operation.parameters.push({
+            name: pk,
+            description: prop.description,
+            paramType: "query",
+            type: prop.type,
+            required: operation.method === "PATCH" ? false : true
+          });
+      });
+
+
+
+
+    });
+
+    if(!idFound) return;
+    // get by id, uuid, key
+    operations.push( {
+      method: "GET",
+      summary: "Fetch " + k,
+      operationId: "get" + _.capitalize(k),
+      responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
+      parameters: [{
+        name: keyName,
+        description: keyNode.description,
+        paramType: "query",
+        type: keyNode.type
+      }]
+    } );
+
+    // Delete the model
+    operations.push( {
+      method: "DELETE",
+      summary: "Delete " + k,
+      operationId: "delete" + _.capitalize(k),
+      responses: {'200': {description: 'success' } },
+      parameters: [{
+        name: keyName,
+        description: keyNode.description,
+        paramType: "query",
+        type: keyNode.type
+      }]
+    } );
+
+    //======== diff
+    _.forEach(operations, function(operation) {
+      var method = operation.method.toLowerCase();
+      delete operation.method;
+      api[method] = operation;
+    });
+    //api.operations = operations; //merge
+
+    apis["/" + k.toLowerCase()] = api;
+  });
+
+  file_contents.paths = apis;
 }
-//===============
+//=============================================================================
 function crudify_v1(file_contents, removeapis) {
+  if(!file_contents.apis) file_contents.apis = [];
   var apis = removeapis ? [] : file_contents.apis;
   var models = file_contents.models;
 
