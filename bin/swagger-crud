@@ -10,16 +10,19 @@ var packageJson = require(path.join(__dirname, '..', 'package.json'));
 
 program
   .version( packageJson.version )
-  .usage('<file>')
+  .usage('<input file> [outputfile]')
   .description('Crudify Swagger file')
-  .action( function( prg  ) {
+  .action( function( prg, outputfile  ) {
     if(!prg || !prg.length) {
       console.log("Missing Swagger file");
       //program.outputHelp();
       process.exit(1);
     }
+    if(!outputfile || !outputfile.length) outputfile = "out.json";
     console.log("Using Swagger file: " + prg);
-    swaggercrud.crudify( prg, program.args[1] );
+    swaggercrud.crudify( prg, outputfile );
+
+    console.log("Writting: ", outputfile);
     console.log("Done.");
   } );
 

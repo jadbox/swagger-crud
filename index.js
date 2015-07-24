@@ -1,8 +1,12 @@
 var parser = require("swagger-parser");
 var _       = require("lodash");
 var fs = require("fs");
+var path = require("path");
 
-exports.crudify = function(file) {
+exports.crudify = function(file, outfile) {
+  file = path.join(process.cwd(), file);
+  outfile = path.join(process.cwd(), outfile);
+
   var file_contents = JSON.parse(fs.readFileSync(file));
 
   var apis = [];// file_contents.apis;
@@ -57,7 +61,7 @@ exports.crudify = function(file) {
 });
 
   file_contents.apis = apis;
-  fs.writeFileSync("out.json", JSON.stringify(file_contents, null, '\t'));
+  fs.writeFileSync(outfile, JSON.stringify(file_contents, null, '\t'));
 /*
   parser.parse(file_contents, {parseYaml:false}, function(err, api, metadata) {
     if (!err) {
@@ -72,7 +76,7 @@ exports.crudify = function(file) {
 
 
 if(!module.parent) {
-  exports.crudify("account.json");
+  exports.crudify("account.json", "out.json");
 }
 
 /*
