@@ -1,15 +1,43 @@
+#!/usr/bin/env node
+/*eslint quotes: [0, "single"], curly: 0, new-cap:1, eqeqeq:1, no-process-exit:0, no-loop-func:1, no-unreachable:1, camelcase:0, noempty:0, dot-notation:0, no-underscore-dangle:0, eol-last:0*/
+/*eslint-disable no-console */
+/*eslint-env node */
 var parser = require("swagger-parser");
 var _       = require("lodash");
 var fs = require("fs");
 var path = require("path");
 
 exports.crudify = function(file, outfile, removeapis) {
-  console.log("removeapis", removeapis);
   file = path.join(process.cwd(), file);
   outfile = path.join(process.cwd(), outfile);
 
   var file_contents = JSON.parse(fs.readFileSync(file));
+  if(parseInt(file_contents.apiVersion) < 2) crudify_v1(file_contents, removeapis);
+  else crudify_v2(file_contents, removeapis);
 
+  fs.writeFileSync(outfile, JSON.stringify(file_contents, null, '\t'));
+/*
+  parser.parse(file_contents, {parseYaml:false}, function(err, api, metadata) {
+    if (!err) {
+      console.log(api.models);
+      return;
+      console.log("API name: %s, Version: %s", api.info.title, api.info.version);
+    }
+    else throw new Error(err);
+  });
+  */
+}
+
+
+if(!module.parent) {
+  exports.crudify("account.json", "out.json");
+}
+
+function crudify_v2(file_contents, removeapis) {
+  console.log("=== Swagger v2 spec NOT supported yet ===");
+}
+//===============
+function crudify_v1(file_contents, removeapis) {
   var apis = removeapis ? [] : file_contents.apis;
   var models = file_contents.models;
 
@@ -63,128 +91,40 @@ exports.crudify = function(file, outfile, removeapis) {
 
 
 
+    });
+
+    if(!idFound) return;
+    // get by id, uuid, key
+    operations.push( {
+      method: "GET",
+      summary: "Fetch " + k,
+      nickname: "get" + _.capitalize(k),
+      type: k,
+      parameters: [{
+        name: keyName,
+        description: keyNode.description,
+        paramType: "query",
+        type: keyNode.type
+      }]
+    } );
+
+    // Delete the model
+    operations.push( {
+      method: "DELETE",
+      summary: "Delete " + k,
+      nickname: "delete" + _.capitalize(k),
+      type: k,
+      parameters: [{
+        name: keyName,
+        description: keyNode.description,
+        paramType: "query",
+        type: keyNode.type
+      }]
+    } );
+    api.operations = operations; //merge
+    apis.push(api);
+
   });
-
-  if(!idFound) return;
-  // get by id, uuid, key
-  operations.push( {
-    method: "GET",
-    summary: "Fetch " + k,
-    nickname: "get" + _.capitalize(k),
-    type: k,
-    parameters: [{
-      name: keyName,
-      description: keyNode.description,
-      paramType: "query",
-      type: keyNode.type
-    }]
-  } );
-
-  // Delete the model
-  operations.push( {
-    method: "DELETE",
-    summary: "Delete " + k,
-    nickname: "delete" + _.capitalize(k),
-    type: k,
-    parameters: [{
-      name: keyName,
-      description: keyNode.description,
-      paramType: "query",
-      type: keyNode.type
-    }]
-  } );
-  api.operations = operations; //merge
-  apis.push(api);
-});
 
   file_contents.apis = apis;
-  fs.writeFileSync(outfile, JSON.stringify(file_contents, null, '\t'));
-/*
-  parser.parse(file_contents, {parseYaml:false}, function(err, api, metadata) {
-    if (!err) {
-      console.log(api.models);
-      return;
-      console.log("API name: %s, Version: %s", api.info.title, api.info.version);
-    }
-    else throw new Error(err);
-  });
-  */
 }
-
-
-if(!module.parent) {
-  exports.crudify("account.json", "out.json");
-}
-
-/*
-{
-    "path": "/account/{email}",
-    "operations": [
-        {
-            "method": "HEAD",
-            "summary": "Checks if an account exists",
-            "notes": "This method requires no authentication.",
-            "type": "void",
-            "nickname": "checkAccount",
-            "parameters": [
-                {
-                    "name": "email",
-                    "description": "The account email.",
-                    "required": true,
-                    "type": "string",
-                    "paramType": "path"
-                }
-            ],
-            "responseMessages": [
-                {
-                    "code": 404,
-                    "message": "The specified account cannot be found."
-                }
-            ]
-        },
-        {
-            "method": "GET",
-            "summary": "Retrieves an account metadata",
-            "notes": "This method requires a valid API token which has been generated for the same account specified in the request.",
-            "type": "Account",
-            "nickname": "getAccountMetadata",
-            "parameters": [
-                {
-                    "name": "email",
-                    "description": "The account email.",
-                    "required": true,
-                    "type": "string",
-                    "paramType": "path"
-                },
-                {
-                    "name": "token",
-                    "description": "An API token generated for the specified account.",
-                    "required": true,
-                    "type": "string",
-                    "paramType": "query"
-                }
-            ],
-            "responseMessages": [
-                {
-                    "code": 400,
-                    "message": "Bad request: a parameter is missing or invalid.",
-                    "responseModel": "Error"
-                },
-                {
-                    "code": 401,
-                    "message": "Unauthorized: the specified API token is invalid or expired.",
-                    "responseModel": "Error"
-                },
-                {
-                    "code": 404,
-                    "message": "The specified account cannot be found.",
-                    "responseModel": "Error"
-                },
-                {
-                    "code": 500,
-                    "message": "An internal error occurred during the processing of the request.",
-                    "responseModel": "Error"
-                }
-            ]
-        },
-        */
