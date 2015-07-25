@@ -34,7 +34,7 @@ if(!module.parent) {
 }
 
 function crudify_v2(file_contents, removeapis) {
-  console.log("=== Swagger v2 spec NOT supported yet ===");
+  //console.log("=== Swagger v2 spec WIP ===");
   if(!file_contents.paths) file_contents.paths = {};
   var apis = removeapis ? {} : file_contents.paths;
   if(removeapis) delete file_contents.apis; // legecy
@@ -78,13 +78,15 @@ function crudify_v2(file_contents, removeapis) {
         }
 
         _.forEach(operations, function(operation) {
-          operation.parameters.push({
+          var param = {
             name: pk,
             description: prop.description,
-            paramType: "query",
+            'in': "query",
             type: prop.type,
             required: operation.method === "PATCH" ? false : true
-          });
+          };
+          if(!param.required) delete param.required;
+          operation.parameters.push(param);
       });
 
 
@@ -103,7 +105,7 @@ function crudify_v2(file_contents, removeapis) {
       parameters: [{
         name: keyName,
         description: keyNode.description,
-        paramType: "query",
+        'in': "query",
         type: keyNode.type
       }]
     } );
@@ -118,7 +120,7 @@ function crudify_v2(file_contents, removeapis) {
       parameters: [{
         name: keyName,
         description: keyNode.description,
-        paramType: "query",
+        'in': "query",
         type: keyNode.type
       }]
     } );
@@ -180,13 +182,15 @@ function crudify_v1(file_contents, removeapis) {
         }
 
         _.forEach(operations, function(operation) {
-          operation.parameters.push({
+          var param = {
             name: pk,
             description: prop.description,
             paramType: "query",
             type: prop.type,
             required: operation.method === "PATCH" ? false : true
-          });
+          };
+          if(!param.required) delete param.required;
+          operation.parameters.push(param);
       });
 
 
