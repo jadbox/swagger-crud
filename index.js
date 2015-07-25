@@ -38,7 +38,7 @@ function crudify_v2(file_contents, removeapis) {
   if(!file_contents.paths) file_contents.paths = {};
   var apis = removeapis ? {} : file_contents.paths;
   if(removeapis) delete file_contents.apis; // legecy
-  var models = file_contents.models;
+  var models = file_contents.definitions;
 
   // FOR EACH MODEL (unique path, operations)
   _.forEach(models, function(model, k) {
@@ -51,6 +51,7 @@ function crudify_v2(file_contents, removeapis) {
       method: "POST",
       summary: "Create " + k,
       operationId: "create" + _.capitalize(k),
+      "x-swagger-router-controller": "create" + _.capitalize(k),
       responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
       parameters: []
     } );
@@ -60,6 +61,7 @@ function crudify_v2(file_contents, removeapis) {
       method: "PATCH",
       summary: "Update to " + k,
       operationId: "update" + _.capitalize(k),
+      "x-swagger-router-controller": "update" + _.capitalize(k),
       responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
       parameters: []
     } );
@@ -69,7 +71,7 @@ function crudify_v2(file_contents, removeapis) {
     var keyName, keyNode;
     // FOR EACH MODEL PROPERTY
     _.forEach(model.properties, function(prop, pk) {
-        if(pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
+        if(pk.indexOf("_id") !== -1 || pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
           keyName = pk;
           keyNode = prop;
           idFound = true;
@@ -96,6 +98,7 @@ function crudify_v2(file_contents, removeapis) {
       method: "GET",
       summary: "Fetch " + k,
       operationId: "get" + _.capitalize(k),
+      "x-swagger-router-controller": "get" + _.capitalize(k),
       responses: {'200': {description: 'success', 'schema': {'$ref':'#/definitions/'+k}  } },
       parameters: [{
         name: keyName,
@@ -110,6 +113,7 @@ function crudify_v2(file_contents, removeapis) {
       method: "DELETE",
       summary: "Delete " + k,
       operationId: "delete" + _.capitalize(k),
+      "x-swagger-router-controller": "delete" + _.capitalize(k),
       responses: {'200': {description: 'success' } },
       parameters: [{
         name: keyName,
@@ -169,7 +173,7 @@ function crudify_v1(file_contents, removeapis) {
     var keyName, keyNode;
     // FOR EACH MODEL PROPERTY
     _.forEach(model.properties, function(prop, pk) {
-        if(pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
+        if(pk.indexOf("_id") !== -1 || pk === "id" || pk === "uuid" || pk === "uid" || pk === "key") {
           keyName = pk;
           keyNode = prop;
           idFound = true;
